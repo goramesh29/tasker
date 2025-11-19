@@ -3,21 +3,25 @@
 import { TaskList } from '@/types';
 import { useStore } from '@/store/useStore';
 import TaskCard from './TaskCard';
-import { Plus, Folder, Eye, EyeOff, LayoutGrid, List } from 'lucide-react';
+import { Plus, Folder, Eye, EyeOff, LayoutGrid, List, LogOut, User as UserIcon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useDroppable } from '@dnd-kit/core';
+import { User as FirebaseUser } from 'firebase/auth';
 
 interface TaskViewProps {
   list: TaskList;
+  user: FirebaseUser | null;
+  onSignOut: () => void;
 }
 
 const COLORS = ['yellow', 'pink', 'blue', 'green', 'purple', 'orange'];
 
-export default function TaskView({ list }: TaskViewProps) {
+export default function TaskView({ list, user, onSignOut }: TaskViewProps) {
   const { tasks, addTask, updateList, groups } = useStore();
   const [newTaskId, setNewTaskId] = useState<string | null>(null);
   const [showCompleted, setShowCompleted] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const { setNodeRef, isOver } = useDroppable({
     id: `list-${list.id}`,
   });
@@ -91,6 +95,42 @@ export default function TaskView({ list }: TaskViewProps) {
               <Plus className="w-5 h-5" />
               Add Task
             </button>
+            <div className="relative ml-2">
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition-colors"
+                title={user?.displayName || 'User'}
+              >
+                <UserIcon className="w-5 h-5" />
+              </button>
+              {showUserMenu && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-10" 
+                    onClick={() => setShowUserMenu(false)}
+                  />
+                  <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-20 min-w-[200px]">
+                    <div className="px-4 py-2 border-b border-gray-200">
+                      <div className="flex items-center gap-2 mb-1">
+                        <UserIcon className="w-4 h-4 text-gray-500" />
+                        <span className="text-sm font-medium text-gray-700">{user?.displayName}</span>
+                      </div>
+                      <div className="text-xs text-gray-500">{user?.email}</div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        onSignOut();
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2">

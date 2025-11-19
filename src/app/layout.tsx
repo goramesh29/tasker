@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { Be_Vietnam_Pro } from "next/font/google";
+
+const beVietnamPro = Be_Vietnam_Pro({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-be-vietnam-pro",
+});
 
 export const metadata: Metadata = {
   title: "Tasker - Modern Todo List",
@@ -28,7 +35,7 @@ export default function RootLayout({
           }
         `}} />
       </head>
-      <body>
+      <body className={beVietnamPro.className}>
         <AuthProvider>
           {children}
         </AuthProvider>

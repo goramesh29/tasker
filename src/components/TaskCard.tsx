@@ -74,7 +74,7 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid' }:
       <div className="flex items-center justify-between gap-2 flex-1 min-w-0">
         <div className="flex-1 overflow-hidden min-w-0">
           <textarea
-            ref={inputRef as any}
+            ref={inputRef}
             value={task.title}
             onChange={(e) => updateTask(task.id, { title: e.target.value })}
             onKeyDown={(e) => {
@@ -88,7 +88,7 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid' }:
               e.currentTarget.scrollTop = 0;
             }}
             onClick={(e) => e.stopPropagation()}
-            className={`bg-transparent border-none outline-none w-full font-medium cursor-text resize-none ${
+            className={`bg-transparent border-none outline-none w-full font-normal cursor-text resize-none ${
               task.completed ? 'line-through text-gray-500' : 'text-gray-800'
             }`}
             placeholder="New task"

@@ -2,7 +2,7 @@
 
 import { TaskList } from '@/types';
 import { useStore } from '@/store/useStore';
-import { Menu, Plus, ChevronRight, ChevronDown, FolderPlus, LogOut, User, Trash2 } from 'lucide-react';
+import { Menu, Plus, ChevronRight, ChevronDown, FolderPlus, LogOut, User, Trash2, ChevronLeft } from 'lucide-react';
 import { useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { User as FirebaseUser } from 'firebase/auth';
@@ -15,6 +15,8 @@ interface SidebarProps {
   hoverListId: string | null;
   user: FirebaseUser | null;
   onSignOut: () => void;
+  collapsed: boolean;
+  onToggleCollapse: () => void;
 }
 
 function DroppableListItem({ list, isSelected, isHovered, onSelect, onDelete }: { list: TaskList; isSelected: boolean; isHovered: boolean; onSelect: () => void; onDelete: () => void }) {
@@ -36,7 +38,8 @@ function DroppableListItem({ list, isSelected, isHovered, onSelect, onDelete }: 
     >
       <button
         onClick={onSelect}
-        className="flex-1 text-left"
+        className="flex-1 text-left truncate overflow-hidden whitespace-nowrap"
+        title={list.name}
       >
         {list.name}
       </button>
@@ -54,10 +57,9 @@ function DroppableListItem({ list, isSelected, isHovered, onSelect, onDelete }: 
   );
 }
 
-export default function Sidebar({ lists, selectedListId, onSelectList, onAddList, hoverListId, user, onSignOut }: SidebarProps) {
+export default function Sidebar({ lists, selectedListId, onSelectList, onAddList, hoverListId, user, onSignOut, collapsed, onToggleCollapse }: SidebarProps) {
   const { groups, addGroup, deleteList } = useStore();
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const [listToDelete, setListToDelete] = useState<string | null>(null);
 
   const handleDeleteList = (listId: string) => {
@@ -98,45 +100,21 @@ export default function Sidebar({ lists, selectedListId, onSelectList, onAddList
   const sortedGroups = [...groups].sort((a, b) => a.position - b.position);
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen">
+    <div className={`bg-white border-r border-gray-200 flex flex-col h-screen transition-all duration-300 ease-in-out flex-shrink-0 overflow-x-hidden ${collapsed ? 'w-16' : 'w-64'}`}>
       <div className="p-4 border-b border-gray-200 flex items-center gap-3 relative">
         <button
-          onClick={() => setShowUserMenu(!showUserMenu)}
+          onClick={onToggleCollapse}
           className="hover:bg-gray-100 rounded p-1 transition-colors"
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          <Menu className="w-6 h-6 text-gray-600" />
+          {collapsed ? <ChevronRight className="w-6 h-6 text-gray-600" /> : <Menu className="w-6 h-6 text-gray-600" />}
         </button>
-        <h1 className="text-xl font-bold text-gray-800">Tasker</h1>
-        {showUserMenu && (
-          <>
-            <div 
-              className="fixed inset-0 z-10" 
-              onClick={() => setShowUserMenu(false)}
-            />
-            <div className="absolute top-full left-4 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-20 min-w-[200px]">
-              <div className="px-4 py-2 border-b border-gray-200">
-                <div className="flex items-center gap-2 mb-1">
-                  <User className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm font-medium text-gray-700">{user?.displayName}</span>
-                </div>
-                <div className="text-xs text-gray-500">{user?.email}</div>
-              </div>
-              <button
-                onClick={() => {
-                  setShowUserMenu(false);
-                  onSignOut();
-                }}
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-              >
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </button>
-            </div>
-          </>
-        )}
+        {!collapsed && <h1 className="text-xl font-bold text-gray-800">Tasker</h1>}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3">
+      {!collapsed && (
+        <>
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-3">
         {/* Ungrouped Lists */}
         {ungroupedLists.map((list) => (
           <DroppableListItem
@@ -197,19 +175,21 @@ export default function Sidebar({ lists, selectedListId, onSelectList, onAddList
       <div className="p-3 border-t border-gray-200 space-y-2">
         <button
           onClick={handleAddGroup}
-          className="w-full flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+          className="w-full flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors whitespace-nowrap"
         >
-          <FolderPlus className="w-5 h-5" />
+          <FolderPlus className="w-5 h-5 flex-shrink-0" />
           <span className="text-sm">New Group</span>
         </button>
         <button
           onClick={onAddList}
-          className="w-full flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+          className="w-full flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors whitespace-nowrap"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-5 h-5 flex-shrink-0" />
           <span className="text-sm">New List</span>
         </button>
       </div>
+      </>
+      )}
 
       {/* Delete Confirmation Dialog */}
       {listToDelete && (

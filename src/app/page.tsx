@@ -16,6 +16,7 @@ export default function Home() {
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
   const [activeTask, setActiveTask] = useState<any>(null);
   const [hoverListId, setHoverListId] = useState<string | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isDraggingRef = useRef(false);
 
   useEffect(() => {
@@ -169,7 +170,7 @@ export default function Home() {
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className="flex h-screen bg-gray-50">
+      <div className="flex h-screen bg-gray-50 overflow-hidden">
         <Sidebar 
           lists={lists}
           selectedListId={selectedListId}
@@ -178,11 +179,13 @@ export default function Home() {
           hoverListId={hoverListId}
           user={user}
           onSignOut={signOut}
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
-        <main className="flex-1 overflow-hidden">
-            {selectedList ? (
-              <TaskView list={selectedList} />
-            ) : (
+        <main className="flex-1 overflow-hidden transition-all duration-300 ease-in-out">
+          {selectedList ? (
+            <TaskView list={selectedList} user={user} onSignOut={signOut} />
+          ) : (
               <div className="h-full flex items-center justify-center">
                 <div className="text-center">
                   <div className="text-6xl mb-4">📝</div>
