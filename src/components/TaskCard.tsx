@@ -1,14 +1,15 @@
 'use client';
 
 import { Task } from '@/types';
-import { Circle, CheckCircle2, Trash2 } from 'lucide-react';
+import { Circle, CheckCircle2, Trash2, Palette, Maximize2 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 
 interface TaskCardProps {
   task: Task;
   autoFocus?: boolean;
+  viewMode?: 'grid' | 'list';
 }
 
 const COLORS = {
@@ -20,22 +21,41 @@ const COLORS = {
   orange: 'bg-orange-100 hover:bg-orange-200',
 };
 
-export default function TaskCard({ task, autoFocus = false }: TaskCardProps) {
+export default function TaskCard({ task, autoFocus = false, viewMode = 'grid' }: TaskCardProps) {
   const { toggleTaskComplete, updateTask, deleteTask } = useStore();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showExpandedView, setShowExpandedView] = useState(false);
+
+  const cardHeight = viewMode === 'grid' ? '120px' : '70px';
+  const lineClamp = viewMode === 'grid' ? 2 : 1;
+
+  const colors = [
+    { name: 'Sky Blue', class: 'bg-sky-100', value: 'sky' },
+    { name: 'Yellow', class: 'bg-yellow-100', value: 'yellow' },
+    { name: 'Pink', class: 'bg-pink-100', value: 'pink' },
+    { name: 'Green', class: 'bg-green-100', value: 'green' },
+    { name: 'Purple', class: 'bg-purple-100', value: 'purple' },
+    { name: 'Orange', class: 'bg-orange-100', value: 'orange' },
+  ];
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
   });
   
   const colorClass = task.color && task.color in COLORS 
     ? COLORS[task.color as keyof typeof COLORS] 
-    : COLORS.blue;
+    : 'bg-sky-100';
 
   useEffect(() => {
     if (autoFocus && inputRef.current) {
       inputRef.current.focus();
     }
-  }, [autoFocus]);
+    // Auto-adjust height on mount and when title changes
+    if (inputRef.current && viewMode === 'grid') {
+      inputRef.current.style.height = 'auto';
+      inputRef.current.style.height = Math.min(inputRef.current.scrollHeight, 48) + 'px';
+    }
+  }, [autoFocus, task.title, viewMode]);
 
   const style = transform && !isDragging ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
@@ -44,36 +64,56 @@ export default function TaskCard({ task, autoFocus = false }: TaskCardProps) {
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={{ ...style, height: cardHeight, overflow: 'hidden' }}
       {...listeners}
       {...attributes}
-      className={`${task.completed ? 'bg-gray-200' : colorClass} rounded-2xl p-4 shadow-sm transition-all duration-200 group min-h-[140px] flex flex-col ${
-        isDragging ? 'opacity-80' : 'cursor-grab hover:shadow-md active:cursor-grabbing'
+      className={`${task.completed ? 'bg-gray-200' : colorClass} rounded-2xl p-4 shadow-sm transition-all duration-200 group flex ${viewMode === 'list' ? 'flex-row items-center' : 'flex-col'} ${
+        isDragging ? 'opacity-30' : 'cursor-grab hover:shadow-md active:cursor-grabbing'
       }`}
     >
-      <div className="flex items-start justify-between mb-2">
-        <input
-          ref={inputRef}
-          type="text"
-          value={task.title}
-          onChange={(e) => updateTask(task.id, { title: e.target.value })}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.currentTarget.blur();
-            }
-          }}
-          onClick={(e) => e.stopPropagation()}
-          className={`bg-transparent border-none outline-none w-full font-medium cursor-text ${
-            task.completed ? 'line-through text-gray-500' : 'text-gray-800'
-          }`}
-          placeholder="New task"
-        />
+      <div className="flex items-center justify-between gap-2 flex-1 min-w-0">
+        <div className="flex-1 overflow-hidden min-w-0">
+          <textarea
+            ref={inputRef as any}
+            value={task.title}
+            onChange={(e) => updateTask(task.id, { title: e.target.value })}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                e.currentTarget.blur();
+              }
+            }}
+            onBlur={(e) => {
+              // Reset scroll position when losing focus
+              e.currentTarget.scrollTop = 0;
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className={`bg-transparent border-none outline-none w-full font-medium cursor-text resize-none ${
+              task.completed ? 'line-through text-gray-500' : 'text-gray-800'
+            }`}
+            placeholder="New task"
+            rows={viewMode === 'list' ? 1 : 2}
+            style={{ 
+              WebkitAppearance: 'none', 
+              MozAppearance: 'none', 
+              appearance: 'none',
+              lineHeight: '1.5',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: viewMode === 'list' ? 'nowrap' : 'normal',
+              display: viewMode === 'list' ? 'block' : '-webkit-box',
+              WebkitLineClamp: viewMode === 'grid' ? 2 : undefined,
+              WebkitBoxOrient: viewMode === 'grid' ? 'vertical' : undefined,
+              maxHeight: viewMode === 'list' ? '24px' : '48px',
+            }}
+          />
+        </div>
         <button
           onClick={(e) => {
             e.stopPropagation();
             toggleTaskComplete(task.id);
           }}
-          className="flex-shrink-0 ml-2 hover:scale-110 transition-transform"
+          className={`flex-shrink-0 hover:scale-110 transition-transform ${viewMode === 'list' ? 'ml-4' : ''}`}
         >
           {task.completed ? (
             <CheckCircle2 className="w-5 h-5 text-gray-600" />
@@ -83,28 +123,140 @@ export default function TaskCard({ task, autoFocus = false }: TaskCardProps) {
         </button>
       </div>
       
-      {task.description && (
-        <textarea
-          value={task.description}
-          onChange={(e) => updateTask(task.id, { description: e.target.value })}
-          className="bg-transparent border-none outline-none w-full text-sm text-gray-600 mt-1 resize-none flex-1"
-          placeholder="Add description..."
-          rows={3}
-        />
-      )}
-      
-      <div className="flex justify-end mt-auto pt-2">
+      <div className={`flex items-center gap-2 flex-shrink-0 ${viewMode === 'list' ? 'ml-4' : 'justify-end pt-2'}`} style={{ height: viewMode === 'list' ? 'auto' : '32px' }}>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowExpandedView(true);
+          }}
+          className="opacity-30 hover:opacity-100 transition-opacity flex-shrink-0"
+          title="Expand card"
+        >
+          <Maximize2 className="w-4 h-4 text-gray-600" />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowColorPicker(!showColorPicker);
+          }}
+          className="opacity-30 hover:opacity-100 transition-opacity flex-shrink-0 relative"
+          title="Change color"
+        >
+          <Palette className="w-4 h-4 text-gray-600" />
+          {showColorPicker && (
+            <>
+              <div 
+                className="fixed inset-0 z-10" 
+                onClick={() => setShowColorPicker(false)}
+              />
+              <div className="absolute bottom-full right-0 mb-1 bg-white rounded-lg shadow-xl border border-gray-200 p-2 z-20 flex gap-1">
+                {colors.map((color) => (
+                  <button
+                    key={color.value}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      updateTask(task.id, { color: color.value });
+                      setShowColorPicker(false);
+                    }}
+                    className={`w-6 h-6 rounded-full ${color.class} border-2 border-gray-300 hover:border-gray-500 transition-all`}
+                    title={color.name}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </button>
         <button
           onClick={(e) => {
             e.stopPropagation();
             deleteTask(task.id);
           }}
-          className="opacity-30 hover:opacity-100 transition-opacity"
+          className="opacity-30 hover:opacity-100 transition-opacity flex-shrink-0"
           title="Delete task"
         >
           <Trash2 className="w-4 h-4 text-gray-600" />
         </button>
       </div>
+
+      {/* Expanded View Modal */}
+      {showExpandedView && (
+        <>
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-50" 
+            onClick={() => setShowExpandedView(false)}
+          />
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl z-50 max-w-3xl w-full mx-4 max-h-[85vh] overflow-y-auto">
+            <div className={`${task.completed ? 'bg-gray-200' : colorClass} p-8 rounded-2xl`}>
+              <div className="flex items-start justify-between mb-6">
+                <textarea
+                  value={task.title}
+                  onChange={(e) => updateTask(task.id, { title: e.target.value })}
+                  className={`bg-transparent border-none outline-none w-full text-2xl font-bold cursor-text resize-none ${
+                    task.completed ? 'line-through text-gray-500' : 'text-gray-800'
+                  }`}
+                  placeholder="Task title"
+                  rows={3}
+                  style={{ lineHeight: '1.3' }}
+                />
+                <button
+                  onClick={() => toggleTaskComplete(task.id)}
+                  className="ml-4 flex-shrink-0"
+                  title={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
+                >
+                  {task.completed ? (
+                    <CheckCircle2 className="w-8 h-8 text-green-600" />
+                  ) : (
+                    <Circle className="w-8 h-8 text-gray-400 hover:text-gray-600" />
+                  )}
+                </button>
+              </div>
+              
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                <textarea
+                  value={task.notes || ''}
+                  onChange={(e) => updateTask(task.id, { notes: e.target.value })}
+                  className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Add notes..."
+                  rows={4}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex gap-2">
+                  {colors.map((color) => (
+                    <button
+                      key={color.value}
+                      onClick={() => updateTask(task.id, { color: color.value })}
+                      className={`w-8 h-8 rounded-full ${color.class} border-2 ${
+                        task.color === color.value ? 'border-gray-800' : 'border-gray-300'
+                      } hover:border-gray-500 transition-all`}
+                      title={color.name}
+                    />
+                  ))}
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      deleteTask(task.id);
+                      setShowExpandedView(false);
+                    }}
+                    className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
+                  >
+                    Delete Task
+                  </button>
+                  <button
+                    onClick={() => setShowExpandedView(false)}
+                    className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

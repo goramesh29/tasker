@@ -3,7 +3,7 @@
 import { TaskList } from '@/types';
 import { useStore } from '@/store/useStore';
 import TaskCard from './TaskCard';
-import { Plus, Folder, Eye, EyeOff } from 'lucide-react';
+import { Plus, Folder, Eye, EyeOff, LayoutGrid, List } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 
@@ -17,6 +17,7 @@ export default function TaskView({ list }: TaskViewProps) {
   const { tasks, addTask, updateList, groups } = useStore();
   const [newTaskId, setNewTaskId] = useState<string | null>(null);
   const [showCompleted, setShowCompleted] = useState(true);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const { setNodeRef, isOver } = useDroppable({
     id: `list-${list.id}`,
   });
@@ -34,14 +35,13 @@ export default function TaskView({ list }: TaskViewProps) {
   }, [newTaskId]);
 
   const handleAddTask = () => {
-    const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
     const tempId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     setNewTaskId(tempId);
     addTask({
       title: '',
       completed: false,
       listId: list.id,
-      color: randomColor,
+      color: 'sky',
     });
   };
 
@@ -71,6 +71,17 @@ export default function TaskView({ list }: TaskViewProps) {
                 <><EyeOff className="w-4 h-4" /><span className="text-sm">Hide Done</span></>
               ) : (
                 <><Eye className="w-4 h-4" /><span className="text-sm">Show Done</span></>
+              )}
+            </button>
+            <button
+              onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+              className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Toggle View"
+            >
+              {viewMode === 'grid' ? (
+                <><List className="w-4 h-4" /><span className="text-sm">List View</span></>
+              ) : (
+                <><LayoutGrid className="w-4 h-4" /><span className="text-sm">Grid View</span></>
               )}
             </button>
             <button
@@ -113,12 +124,16 @@ export default function TaskView({ list }: TaskViewProps) {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className={viewMode === 'grid' 
+            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+            : 'flex flex-col gap-2'
+          }>
             {listTasks.map((task, index) => (
               <TaskCard 
                 key={task.id} 
                 task={task} 
                 autoFocus={index === listTasks.length - 1 && task.title === ''}
+                viewMode={viewMode}
               />
             ))}
           </div>

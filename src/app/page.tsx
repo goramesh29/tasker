@@ -200,7 +200,11 @@ export default function Home() {
         </main>
       </div>
       <DragOverlay>
-        {activeTask ? <TaskCard task={activeTask} /> : null}
+        {activeTask ? (
+          <div className="opacity-50">
+            <TaskCard task={activeTask} />
+          </div>
+        ) : null}
       </DragOverlay>
     </DndContext>
   );
