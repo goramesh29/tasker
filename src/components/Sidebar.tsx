@@ -23,11 +23,10 @@ function DroppableListItem({ list, isSelected, isHovered, onSelect, onDelete }: 
   });
 
   return (
-    <button
+    <div
       ref={setNodeRef}
       data-list-drop-id={list.id}
-      onClick={onSelect}
-      className={`w-full text-left px-4 py-2 rounded-lg mb-1 transition-all group flex items-center justify-between ${
+      className={`w-full px-4 py-2 rounded-lg mb-1 transition-all group flex items-center justify-between ${
         isSelected
           ? 'bg-blue-50 text-blue-600 font-medium'
           : isHovered
@@ -35,18 +34,23 @@ function DroppableListItem({ list, isSelected, isHovered, onSelect, onDelete }: 
           : 'text-gray-700 hover:bg-gray-50'
       }`}
     >
-      <span>{list.name}</span>
+      <button
+        onClick={onSelect}
+        className="flex-1 text-left"
+      >
+        {list.name}
+      </button>
       <button
         onClick={(e) => {
           e.stopPropagation();
           onDelete();
         }}
-        className="opacity-0 group-hover:opacity-30 hover:!opacity-100 transition-opacity"
+        className="opacity-0 group-hover:opacity-30 hover:!opacity-100 transition-opacity flex-shrink-0"
         title="Delete list"
       >
         <Trash2 className="w-4 h-4 text-gray-600" />
       </button>
-    </button>
+    </div>
   );
 }
 
