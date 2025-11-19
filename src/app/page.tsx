@@ -1,7 +1,7 @@
 'use client';
 
 import { useStore } from '@/store/useStore';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import LoginPage from '@/components/LoginPage';
 import Sidebar from '@/components/Sidebar';
@@ -40,6 +40,53 @@ export default function Home() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
+  useEffect(() => {
+    if (user) {
+      setUserId(user.uid);
+      loadFromFirestore();
+      setIsLoaded(true);
+    }
+  }, [user, setUserId, loadFromFirestore]);
+
+  useEffect(() => {
+    if (lists.length > 0 && !selectedListId) {
+      setSelectedListId(lists[0].id);
+    }
+  }, [lists, selectedListId]);
+
+  const handleAddList = useCallback(async () => {
+    const newList = {
+      name: 'New List',
+    };
+    const listId = await addList(newList);
+    if (listId) {
+      setSelectedListId(listId);
+    }
+  }, [addList]);
+
+  const handleAddGroup = useCallback(() => {
+    addGroup({
+      name: 'New Group',
+    });
+  }, [addGroup]);
+
+  const handleAddTask = useCallback(() => {
+    if (!selectedListId) return;
+    addTask({
+      title: '',
+      listId: selectedListId,
+      completed: false,
+    });
+  }, [selectedListId, addTask]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ctrl+G - New Group
@@ -63,54 +110,7 @@ export default function Home() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedListId]);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    })
-  );
-
-  useEffect(() => {
-    if (user) {
-      setUserId(user.uid);
-      loadFromFirestore();
-      setIsLoaded(true);
-    }
-  }, [user, setUserId, loadFromFirestore]);
-
-  useEffect(() => {
-    if (lists.length > 0 && !selectedListId) {
-      setSelectedListId(lists[0].id);
-    }
-  }, [lists, selectedListId]);
-
-  const handleAddList = async () => {
-    const newList = {
-      name: 'New List',
-    };
-    const listId = await addList(newList);
-    if (listId) {
-      setSelectedListId(listId);
-    }
-  };
-
-  const handleAddGroup = () => {
-    addGroup({
-      name: 'New Group',
-    });
-  };
-
-  const handleAddTask = () => {
-    if (!selectedListId) return;
-    addTask({
-      title: '',
-      listId: selectedListId,
-      completed: false,
-    });
-  };
+  }, [selectedListId, handleAddGroup, handleAddList, handleAddTask]);
 
   const handleDragStart = (event: any) => {
     const task = tasks.find((t: any) => t.id === event.active.id);
