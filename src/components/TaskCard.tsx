@@ -13,12 +13,12 @@ interface TaskCardProps {
 }
 
 const COLORS = {
-  yellow: 'bg-yellow-100 hover:bg-yellow-200',
-  pink: 'bg-pink-100 hover:bg-pink-200',
-  blue: 'bg-blue-100 hover:bg-blue-200',
-  green: 'bg-green-100 hover:bg-green-200',
-  purple: 'bg-purple-100 hover:bg-purple-200',
-  orange: 'bg-orange-100 hover:bg-orange-200',
+  yellow: 'bg-gray-100 hover:bg-gray-200',
+  pink: 'bg-gray-100 hover:bg-gray-200',
+  blue: 'bg-gray-100 hover:bg-gray-200',
+  green: 'bg-gray-100 hover:bg-gray-200',
+  purple: 'bg-gray-100 hover:bg-gray-200',
+  orange: 'bg-gray-100 hover:bg-gray-200',
 };
 
 export default function TaskCard({ task, autoFocus = false, viewMode = 'grid' }: TaskCardProps) {
@@ -44,7 +44,7 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid' }:
   
   const colorClass = task.color && task.color in COLORS 
     ? COLORS[task.color as keyof typeof COLORS] 
-    : 'bg-sky-100';
+    : 'bg-gray-100 hover:bg-gray-200';
 
   useEffect(() => {
     if (autoFocus && inputRef.current) {
