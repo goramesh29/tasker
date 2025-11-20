@@ -48,7 +48,16 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid' }:
 
   useEffect(() => {
     if (autoFocus && inputRef.current) {
-      inputRef.current.focus();
+      // Delay focus slightly for mobile to ensure keyboard opens
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+          // For mobile devices, explicitly trigger keyboard
+          if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            inputRef.current.click();
+          }
+        }
+      }, 100);
     }
     // Auto-adjust height on mount and when title changes
     if (inputRef.current && viewMode === 'grid') {
@@ -88,6 +97,9 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid' }:
               e.currentTarget.scrollTop = 0;
             }}
             onClick={(e) => e.stopPropagation()}
+            autoFocus={autoFocus}
+            inputMode="text"
+            enterKeyHint="done"
             className={`bg-transparent border-none outline-none w-full font-normal cursor-text resize-none ${
               task.completed ? 'line-through text-gray-500' : 'text-gray-800'
             }`}
