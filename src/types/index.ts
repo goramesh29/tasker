@@ -10,6 +10,7 @@ export interface Task {
   color?: string;
   position: number;
   dueDate?: number;
+  priority?: boolean;
 }
 
 export interface TaskList {

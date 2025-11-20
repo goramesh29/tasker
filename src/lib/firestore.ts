@@ -5,6 +5,7 @@ import {
   addDoc, 
   updateDoc, 
   deleteDoc, 
+  deleteField,
   query, 
   where,
   orderBy,
@@ -124,8 +125,13 @@ export const firestoreService = {
 
   async updateTask(userId: string, taskId: string, updates: Partial<Task>): Promise<void> {
     const docRef = doc(db, `users/${userId}/tasks`, taskId);
+    // Convert undefined values to deleteField() for Firestore
+    const cleanUpdates: any = {};
+    for (const [key, value] of Object.entries(updates)) {
+      cleanUpdates[key] = value === undefined ? deleteField() : value;
+    }
     await updateDoc(docRef, {
-      ...updates,
+      ...cleanUpdates,
       updatedAt: Timestamp.now(),
     });
   },

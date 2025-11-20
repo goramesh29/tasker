@@ -53,12 +53,20 @@ export default function TaskView({ list, user, onSignOut, onOpenMobileSidebar, s
           (task.notes && task.notes.toLowerCase().includes(searchQuery.toLowerCase()))
         )
         .filter((task) => showCompleted || !task.completed)
-        .sort((a, b) => a.position - b.position)
+        .sort((a, b) => {
+          if (a.priority && !b.priority) return -1;
+          if (!a.priority && b.priority) return 1;
+          return a.position - b.position;
+        })
     : list
     ? tasks
         .filter((task) => task.listId === list.id)
         .filter((task) => showCompleted || !task.completed)
-        .sort((a, b) => a.position - b.position)
+        .sort((a, b) => {
+          if (a.priority && !b.priority) return -1;
+          if (!a.priority && b.priority) return 1;
+          return a.position - b.position;
+        })
     : [];
 
   useEffect(() => {

@@ -1,7 +1,7 @@
 'use client';
 
 import { Task } from '@/types';
-import { Circle, CheckCircle2, Trash2, Palette, Maximize2, ExternalLink, Calendar } from 'lucide-react';
+import { Circle, CheckCircle2, Trash2, Palette, Maximize2, ExternalLink, Calendar, Star } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { useEffect, useRef, useState } from 'react';
 import { useDraggable } from '@dnd-kit/core';
@@ -223,6 +223,16 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid', s
           <button
             onClick={(e) => {
               e.stopPropagation();
+              updateTask(task.id, { priority: !task.priority });
+            }}
+            className={`${task.priority ? 'opacity-100' : 'opacity-30'} hover:opacity-100 transition-opacity flex-shrink-0 p-1 touch-manipulation`}
+            title={task.priority ? "Remove priority" : "Mark as priority"}
+          >
+            <Star className={`w-4 h-4 ${task.priority ? 'fill-yellow-400 text-yellow-400' : 'text-gray-600'}`} />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
               setShowExpandedView(true);
             }}
           className="opacity-30 hover:opacity-100 transition-opacity flex-shrink-0 p-1 touch-manipulation"
@@ -409,6 +419,21 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid', s
                     </button>
                   )}
                 </div>
+              </div>
+
+              <div className="mb-4 md:mb-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={task.priority || false}
+                    onChange={(e) => updateTask(task.id, { priority: e.target.checked })}
+                    className="w-4 h-4 text-yellow-500 border-gray-300 rounded focus:ring-yellow-500"
+                  />
+                  <span className="text-xs md:text-sm font-medium text-gray-700 flex items-center gap-1">
+                    <Star className={`w-4 h-4 ${task.priority ? 'fill-yellow-400 text-yellow-400' : 'text-gray-400'}`} />
+                    Priority Task
+                  </span>
+                </label>
               </div>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
