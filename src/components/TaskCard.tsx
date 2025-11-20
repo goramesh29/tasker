@@ -80,7 +80,7 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid' }:
         isDragging ? 'opacity-30' : 'cursor-grab hover:shadow-md active:cursor-grabbing'
       }`}
     >
-      <div className="flex items-center justify-between gap-2 flex-1 min-w-0">
+      <div className="flex items-start justify-between gap-2 flex-1 min-w-0">
         <div className="flex-1 overflow-hidden min-w-0">
           <textarea
             ref={inputRef}
@@ -125,7 +125,7 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid' }:
             e.stopPropagation();
             toggleTaskComplete(task.id);
           }}
-          className={`flex-shrink-0 hover:scale-110 transition-transform ${viewMode === 'list' ? 'ml-4' : ''}`}
+          className={`flex-shrink-0 hover:scale-110 transition-transform ${viewMode === 'list' ? 'ml-4' : 'mt-0.5'}`}
         >
           {task.completed ? (
             <CheckCircle2 className="w-5 h-5 text-gray-600" />
