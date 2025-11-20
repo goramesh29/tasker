@@ -213,15 +213,16 @@ export default function Sidebar({ lists, selectedListId, onSelectList, onAddList
       </div>
       </>
       )}
+      </div>
 
       {/* Delete Confirmation Dialog */}
       {listToDelete && (
         <>
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-40"
+            className="fixed inset-0 bg-black bg-opacity-50 z-[60]"
             onClick={cancelDeleteList}
           />
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-2xl p-6 z-50 max-w-md w-full mx-4">
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-2xl p-6 z-[70] max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete List?</h3>
             <p className="text-gray-600 mb-6">
               Deleting this list will delete all tasks within it. Do you want to continue?
@@ -243,7 +244,6 @@ export default function Sidebar({ lists, selectedListId, onSelectList, onAddList
           </div>
         </>
       )}
-      </div>
     </>
   );
 }
