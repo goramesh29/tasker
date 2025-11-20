@@ -1,7 +1,7 @@
 'use client';
 
 import { Task } from '@/types';
-import { Circle, CheckCircle2, Trash2, Palette, Maximize2 } from 'lucide-react';
+import { Circle, CheckCircle2, Trash2, Palette, Maximize2, ExternalLink } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { useEffect, useRef, useState } from 'react';
 import { useDraggable } from '@dnd-kit/core';
@@ -10,19 +10,21 @@ interface TaskCardProps {
   task: Task;
   autoFocus?: boolean;
   viewMode?: 'grid' | 'list';
+  showListName?: boolean;
+  onNavigateToList?: (listId: string) => void;
 }
 
 const COLORS = {
-  yellow: 'bg-gray-100 hover:bg-gray-200',
-  pink: 'bg-gray-100 hover:bg-gray-200',
-  blue: 'bg-gray-100 hover:bg-gray-200',
-  green: 'bg-gray-100 hover:bg-gray-200',
-  purple: 'bg-gray-100 hover:bg-gray-200',
-  orange: 'bg-gray-100 hover:bg-gray-200',
+  yellow: 'bg-blue-50 hover:bg-blue-100',
+  pink: 'bg-blue-50 hover:bg-blue-100',
+  blue: 'bg-blue-50 hover:bg-blue-100',
+  green: 'bg-blue-50 hover:bg-blue-100',
+  purple: 'bg-blue-50 hover:bg-blue-100',
+  orange: 'bg-blue-50 hover:bg-blue-100',
 };
 
-export default function TaskCard({ task, autoFocus = false, viewMode = 'grid' }: TaskCardProps) {
-  const { toggleTaskComplete, updateTask, deleteTask } = useStore();
+export default function TaskCard({ task, autoFocus = false, viewMode = 'grid', showListName = false, onNavigateToList }: TaskCardProps) {
+  const { toggleTaskComplete, updateTask, deleteTask, lists } = useStore();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showExpandedView, setShowExpandedView] = useState(false);
@@ -44,7 +46,7 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid' }:
   
   const colorClass = task.color && task.color in COLORS 
     ? COLORS[task.color as keyof typeof COLORS] 
-    : 'bg-gray-100 hover:bg-gray-200';
+    : 'bg-blue-50 hover:bg-blue-100';
 
   useEffect(() => {
     if (autoFocus && inputRef.current) {
@@ -71,6 +73,7 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid' }:
   } : undefined;
 
   return (
+    <>
     <div
       ref={setNodeRef}
       style={{ ...style, height: cardHeight, overflow: 'hidden' }}
@@ -135,12 +138,28 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid' }:
         </button>
       </div>
       
-      <div className={`flex items-center gap-2 flex-shrink-0 ${viewMode === 'list' ? 'ml-4' : 'justify-end pt-2'}`} style={{ height: viewMode === 'list' ? 'auto' : '32px' }}>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowExpandedView(true);
-          }}
+      <div className={`flex items-center gap-2 flex-shrink-0 ${viewMode === 'list' ? 'ml-4' : 'justify-between pt-2'}`} style={{ height: viewMode === 'list' ? 'auto' : '32px' }}>
+        {showListName && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onNavigateToList) {
+                onNavigateToList(task.listId);
+              }
+            }}
+            className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors flex-shrink-0"
+            title="Go to list"
+          >
+            <ExternalLink className="w-3 h-3" />
+            <span className="truncate max-w-[80px]">{lists.find(l => l.id === task.listId)?.name || 'Unknown'}</span>
+          </button>
+        )}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowExpandedView(true);
+            }}
           className="opacity-30 hover:opacity-100 transition-opacity flex-shrink-0 p-1 touch-manipulation"
           title="Expand card"
         >
@@ -188,7 +207,9 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid' }:
         >
           <Trash2 className="w-4 h-4 text-gray-600" />
         </button>
+        </div>
       </div>
+    </div>
 
       {/* Expanded View Modal */}
       {showExpandedView && (
@@ -269,6 +290,6 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid' }:
           </div>
         </>
       )}
-    </div>
+    </>
   );
 }

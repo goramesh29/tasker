@@ -18,6 +18,7 @@ export default function Home() {
   const [hoverListId, setHoverListId] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const isDraggingRef = useRef(false);
 
   useEffect(() => {
@@ -178,6 +179,7 @@ export default function Home() {
           onSelectList={(id) => {
             setSelectedListId(id);
             setMobileSidebarOpen(false);
+            setSearchQuery('');
           }}
           onAddList={handleAddList}
           hoverListId={hoverListId}
@@ -187,9 +189,23 @@ export default function Home() {
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
           mobileOpen={mobileSidebarOpen}
           onMobileClose={() => setMobileSidebarOpen(false)}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
         />
         <main className="flex-1 overflow-hidden transition-all duration-300 ease-in-out">
-          {selectedList ? (
+          {searchQuery ? (
+            <TaskView 
+              list={null}
+              user={user}
+              onSignOut={signOut}
+              onOpenMobileSidebar={() => setMobileSidebarOpen(true)}
+              searchQuery={searchQuery}
+              onNavigateToList={(listId) => {
+                setSelectedListId(listId);
+                setSearchQuery('');
+              }}
+            />
+          ) : selectedList ? (
             <TaskView 
               list={selectedList} 
               user={user} 
@@ -197,7 +213,20 @@ export default function Home() {
               onOpenMobileSidebar={() => setMobileSidebarOpen(true)}
             />
           ) : (
-              <div className="h-full flex items-center justify-center p-4">
+            <div className="h-full flex flex-col bg-gray-50">
+              <div className="border-b border-gray-200 bg-white px-4 md:px-8 py-4 md:py-6 flex justify-between items-center">
+                <h1 className="text-xl md:text-2xl font-bold text-gray-800">Welcome to Tasker</h1>
+                <button
+                  onClick={signOut}
+                  className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  <span className="hidden sm:inline">Sign Out</span>
+                </button>
+              </div>
+              <div className="flex-1 flex items-center justify-center p-4">
                 <div className="text-center">
                   <div className="text-5xl md:text-6xl mb-4">📝</div>
                   <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">No Lists Yet</h2>
@@ -210,7 +239,8 @@ export default function Home() {
                   </button>
                 </div>
               </div>
-            )}
+            </div>
+          )}
         </main>
       </div>
       <DragOverlay>

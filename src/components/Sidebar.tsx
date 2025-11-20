@@ -2,7 +2,7 @@
 
 import { TaskList } from '@/types';
 import { useStore } from '@/store/useStore';
-import { Menu, Plus, ChevronRight, ChevronDown, FolderPlus, LogOut, User, Trash2, ChevronLeft } from 'lucide-react';
+import { Menu, Plus, ChevronRight, ChevronDown, FolderPlus, LogOut, User, Trash2, ChevronLeft, Search, X } from 'lucide-react';
 import { useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { User as FirebaseUser } from 'firebase/auth';
@@ -19,6 +19,8 @@ interface SidebarProps {
   onToggleCollapse: () => void;
   mobileOpen: boolean;
   onMobileClose: () => void;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
 }
 
 function DroppableListItem({ list, isSelected, isHovered, onSelect, onDelete }: { list: TaskList; isSelected: boolean; isHovered: boolean; onSelect: () => void; onDelete: () => void }) {
@@ -59,10 +61,11 @@ function DroppableListItem({ list, isSelected, isHovered, onSelect, onDelete }: 
   );
 }
 
-export default function Sidebar({ lists, selectedListId, onSelectList, onAddList, hoverListId, user, onSignOut, collapsed, onToggleCollapse, mobileOpen, onMobileClose }: SidebarProps) {
-  const { groups, addGroup, deleteList } = useStore();
+export default function Sidebar({ lists, selectedListId, onSelectList, onAddList, hoverListId, user, onSignOut, collapsed, onToggleCollapse, mobileOpen, onMobileClose, searchQuery, onSearchChange }: SidebarProps) {
+  const { groups, addGroup, deleteList, deleteGroup } = useStore();
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [listToDelete, setListToDelete] = useState<string | null>(null);
+  const [groupToDelete, setGroupToDelete] = useState<string | null>(null);
 
   const handleDeleteList = (listId: string) => {
     setListToDelete(listId);
@@ -80,6 +83,21 @@ export default function Sidebar({ lists, selectedListId, onSelectList, onAddList
 
   const cancelDeleteList = () => {
     setListToDelete(null);
+  };
+
+  const handleDeleteGroup = (groupId: string) => {
+    setGroupToDelete(groupId);
+  };
+
+  const confirmDeleteGroup = async () => {
+    if (groupToDelete) {
+      await deleteGroup(groupToDelete);
+      setGroupToDelete(null);
+    }
+  };
+
+  const cancelDeleteGroup = () => {
+    setGroupToDelete(null);
   };
 
   const toggleGroup = (groupId: string) => {
@@ -100,6 +118,17 @@ export default function Sidebar({ lists, selectedListId, onSelectList, onAddList
 
   const ungroupedLists = lists.filter(list => !list.groupId);
   const sortedGroups = [...groups].sort((a, b) => a.position - b.position);
+
+  // Filter lists based on search query
+  const filteredUngroupedLists = ungroupedLists.filter(list =>
+    list.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  const filteredGroups = sortedGroups.filter(group =>
+    group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    lists.filter(list => list.groupId === group.id).some(list =>
+      list.name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  );
 
   return (
     <>
@@ -137,9 +166,31 @@ export default function Sidebar({ lists, selectedListId, onSelectList, onAddList
 
       {!collapsed && (
         <>
+        {/* Search Bar */}
+        <div className="p-3 border-b border-gray-200">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder="Search lists and tasks..."
+              className="w-full pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => onSearchChange('')}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+
         <div className="flex-1 overflow-y-auto overflow-x-hidden p-3">
         {/* Ungrouped Lists */}
-        {ungroupedLists.map((list) => (
+        {filteredUngroupedLists.map((list) => (
           <DroppableListItem
             key={list.id}
             list={list}
@@ -151,16 +202,16 @@ export default function Sidebar({ lists, selectedListId, onSelectList, onAddList
         ))}
 
         {/* Groups */}
-        {sortedGroups.map((group, index) => {
-          const groupLists = lists.filter(list => list.groupId === group.id);
+        {filteredGroups.map((group, index) => {
+          const groupLists = lists.filter(list => list.groupId === group.id && list.name.toLowerCase().includes(searchQuery.toLowerCase()));
           const isCollapsed = collapsedGroups.has(group.id);
 
           return (
-            <div key={group.id} className={`mb-2 ${index === 0 && ungroupedLists.length > 0 ? 'mt-6' : ''} bg-gray-100 rounded-lg p-2`}>
-              <div className="flex items-center gap-1 px-2 py-1">
+            <div key={group.id} className={`mb-2 ${index === 0 && filteredUngroupedLists.length > 0 ? 'mt-6' : ''} bg-gray-100 rounded-lg p-2`}>
+              <div className="flex items-center gap-1 px-2 py-1 group">
                 <button
                   onClick={() => toggleGroup(group.id)}
-                  className="hover:bg-gray-200 rounded p-0.5"
+                  className="hover:bg-gray-200 rounded p-0.5 flex-shrink-0"
                 >
                   {isCollapsed ? (
                     <ChevronRight className="w-4 h-4 text-gray-600" />
@@ -172,9 +223,16 @@ export default function Sidebar({ lists, selectedListId, onSelectList, onAddList
                   type="text"
                   value={group.name}
                   onChange={(e) => useStore.getState().updateGroup(group.id, { name: e.target.value })}
-                  className="flex-1 text-sm font-medium text-gray-700 bg-transparent border-none outline-none px-1 py-0.5 rounded hover:bg-gray-200 focus:bg-gray-200"
+                  className="flex-1 text-sm font-medium text-gray-700 bg-transparent border-none outline-none px-1 py-0.5 rounded hover:bg-gray-200 focus:bg-gray-200 min-w-0"
                   placeholder="Group name..."
                 />
+                <button
+                  onClick={() => handleDeleteGroup(group.id)}
+                  className="opacity-0 group-hover:opacity-30 hover:!opacity-100 transition-opacity flex-shrink-0 p-1"
+                  title="Delete group"
+                >
+                  <Trash2 className="w-4 h-4 text-gray-600" />
+                </button>
               </div>
               {!isCollapsed && groupLists.length > 0 && (
                 <div className="relative ml-3 pl-3 border-l-2 border-gray-300">
@@ -215,7 +273,7 @@ export default function Sidebar({ lists, selectedListId, onSelectList, onAddList
       )}
       </div>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete List Confirmation Dialog */}
       {listToDelete && (
         <>
           <div 
@@ -236,6 +294,38 @@ export default function Sidebar({ lists, selectedListId, onSelectList, onAddList
               </button>
               <button
                 onClick={confirmDeleteList}
+                className="px-4 py-2 text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Delete Group Confirmation Dialog */}
+      {groupToDelete && (
+        <>
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-[60]"
+            onClick={cancelDeleteGroup}
+          />
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-2xl p-6 z-[70] max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Group?</h3>
+            <p className="text-gray-600 mb-6">
+              {lists.filter(list => list.groupId === groupToDelete).length > 0
+                ? 'Deleting this group will move all lists within it to uncategorized. Do you want to continue?'
+                : 'Are you sure you want to delete this group?'}
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={cancelDeleteGroup}
+                className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteGroup}
                 className="px-4 py-2 text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
               >
                 Delete
