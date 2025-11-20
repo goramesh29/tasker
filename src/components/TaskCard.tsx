@@ -5,6 +5,7 @@ import { Circle, CheckCircle2, Trash2, Palette, Maximize2, ExternalLink, Calenda
 import { useStore } from '@/store/useStore';
 import { useEffect, useRef, useState } from 'react';
 import { useDraggable } from '@dnd-kit/core';
+import { parseTaskInput } from '@/lib/nlp';
 
 interface TaskCardProps {
   task: Task;
@@ -64,12 +65,15 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid', s
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     
+    const hasTime = date.getHours() !== 0 || date.getMinutes() !== 0;
+    const timeStr = hasTime ? ` ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}` : '';
+    
     if (date.toDateString() === today.toDateString()) {
-      return 'Today';
+      return `Today${timeStr}`;
     } else if (date.toDateString() === tomorrow.toDateString()) {
-      return 'Tomorrow';
+      return `Tomorrow${timeStr}`;
     } else {
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      return `${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}${timeStr}`;
     }
   };
 
@@ -140,6 +144,29 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid', s
             onBlur={(e) => {
               // Reset scroll position when losing focus
               e.currentTarget.scrollTop = 0;
+              
+              // Parse natural language whenever user finishes editing
+              if (task.title) {
+                const parsed = parseTaskInput(task.title);
+                // Only update if something was parsed differently
+                if (parsed.title !== task.title || parsed.dueDate || parsed.priority !== undefined) {
+                  const updates: Partial<Task> = {
+                    title: parsed.title,
+                  };
+                  
+                  // Update dueDate if parsed
+                  if (parsed.dueDate) {
+                    updates.dueDate = parsed.dueDate;
+                  }
+                  
+                  // Update priority if parsed (only set to true, don't remove existing priority)
+                  if (parsed.priority) {
+                    updates.priority = true;
+                  }
+                  
+                  updateTask(task.id, updates);
+                }
+              }
             }}
             onClick={(e) => e.stopPropagation()}
             autoFocus={autoFocus}
@@ -301,15 +328,14 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid', s
                 left: `${datePickerPosition.left}px`
               }}
             >
-              <div className="mb-2 text-sm font-medium text-gray-700">Due Date</div>
+              <div className="mb-2 text-sm font-medium text-gray-700">Due Date & Time</div>
               <input
                 ref={dateInputRef}
-                type="date"
-                value={task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ''}
+                type="datetime-local"
+                value={task.dueDate ? new Date(task.dueDate - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}
                 onChange={(e) => {
                   if (e.target.value) {
-                    const [year, month, day] = e.target.value.split('-').map(Number);
-                    const dateValue = new Date(year, month - 1, day).getTime();
+                    const dateValue = new Date(e.target.value).getTime();
                     updateTask(task.id, { dueDate: dateValue });
                   } else {
                     updateTask(task.id, { dueDate: undefined });
@@ -394,15 +420,14 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid', s
               </div>
 
               <div className="mb-4 md:mb-6">
-                <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">Due Date</label>
+                <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">Due Date & Time</label>
                 <div className="flex items-center gap-2">
                   <input
-                    type="date"
-                    value={task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ''}
+                    type="datetime-local"
+                    value={task.dueDate ? new Date(task.dueDate - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}
                     onChange={(e) => {
                       if (e.target.value) {
-                        const [year, month, day] = e.target.value.split('-').map(Number);
-                        const dateValue = new Date(year, month - 1, day).getTime();
+                        const dateValue = new Date(e.target.value).getTime();
                         updateTask(task.id, { dueDate: dateValue });
                       } else {
                         updateTask(task.id, { dueDate: undefined });
