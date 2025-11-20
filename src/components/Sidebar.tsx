@@ -156,11 +156,11 @@ export default function Sidebar({ lists, selectedListId, onSelectList, onAddList
           const isCollapsed = collapsedGroups.has(group.id);
 
           return (
-            <div key={group.id} className={`mb-2 ${index === 0 && ungroupedLists.length > 0 ? 'mt-6' : ''}`}>
+            <div key={group.id} className={`mb-2 ${index === 0 && ungroupedLists.length > 0 ? 'mt-6' : ''} bg-gray-100 rounded-lg p-2`}>
               <div className="flex items-center gap-1 px-2 py-1">
                 <button
                   onClick={() => toggleGroup(group.id)}
-                  className="hover:bg-gray-100 rounded p-0.5"
+                  className="hover:bg-gray-200 rounded p-0.5"
                 >
                   {isCollapsed ? (
                     <ChevronRight className="w-4 h-4 text-gray-600" />
@@ -172,12 +172,12 @@ export default function Sidebar({ lists, selectedListId, onSelectList, onAddList
                   type="text"
                   value={group.name}
                   onChange={(e) => useStore.getState().updateGroup(group.id, { name: e.target.value })}
-                  className="flex-1 text-sm font-medium text-gray-700 bg-transparent border-none outline-none px-1 py-0.5 rounded hover:bg-gray-50 focus:bg-gray-50"
+                  className="flex-1 text-sm font-medium text-gray-700 bg-transparent border-none outline-none px-1 py-0.5 rounded hover:bg-gray-200 focus:bg-gray-200"
                   placeholder="Group name..."
                 />
               </div>
               {!isCollapsed && groupLists.length > 0 && (
-                <div className="relative ml-3 pl-3 border-l-2 border-gray-200">
+                <div className="relative ml-3 pl-3 border-l-2 border-gray-300">
                   {groupLists.map((list) => (
                     <DroppableListItem
                       key={list.id}
