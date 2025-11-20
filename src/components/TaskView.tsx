@@ -20,12 +20,28 @@ const COLORS = ['yellow', 'pink', 'blue', 'green', 'purple', 'orange'];
 export default function TaskView({ list, user, onSignOut, onOpenMobileSidebar }: TaskViewProps) {
   const { tasks, addTask, updateList, groups } = useStore();
   const [newTaskId, setNewTaskId] = useState<string | null>(null);
-  const [showCompleted, setShowCompleted] = useState(true);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  
+  // Detect if mobile on mount
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const [showCompleted, setShowCompleted] = useState(() => !isMobile);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => isMobile ? 'list' : 'grid');
   const [showUserMenu, setShowUserMenu] = useState(false);
   const { setNodeRef, isOver } = useDroppable({
     id: `list-${list.id}`,
   });
+
+  // Update defaults when mobile state changes
+  useEffect(() => {
+    setShowCompleted(!isMobile);
+    setViewMode(isMobile ? 'list' : 'grid');
+  }, [isMobile]);
 
   const listTasks = tasks
     .filter((task) => task.listId === list.id)
