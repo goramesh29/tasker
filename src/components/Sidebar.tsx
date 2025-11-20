@@ -17,6 +17,8 @@ interface SidebarProps {
   onSignOut: () => void;
   collapsed: boolean;
   onToggleCollapse: () => void;
+  mobileOpen: boolean;
+  onMobileClose: () => void;
 }
 
 function DroppableListItem({ list, isSelected, isHovered, onSelect, onDelete }: { list: TaskList; isSelected: boolean; isHovered: boolean; onSelect: () => void; onDelete: () => void }) {
@@ -57,7 +59,7 @@ function DroppableListItem({ list, isSelected, isHovered, onSelect, onDelete }: 
   );
 }
 
-export default function Sidebar({ lists, selectedListId, onSelectList, onAddList, hoverListId, user, onSignOut, collapsed, onToggleCollapse }: SidebarProps) {
+export default function Sidebar({ lists, selectedListId, onSelectList, onAddList, hoverListId, user, onSignOut, collapsed, onToggleCollapse, mobileOpen, onMobileClose }: SidebarProps) {
   const { groups, addGroup, deleteList } = useStore();
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [listToDelete, setListToDelete] = useState<string | null>(null);
@@ -100,14 +102,35 @@ export default function Sidebar({ lists, selectedListId, onSelectList, onAddList
   const sortedGroups = [...groups].sort((a, b) => a.position - b.position);
 
   return (
-    <div className={`bg-white border-r border-gray-200 flex flex-col h-screen transition-all duration-300 ease-in-out flex-shrink-0 overflow-x-hidden ${collapsed ? 'w-16' : 'w-64'}`}>
+    <>
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={onMobileClose}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <div className={`bg-white border-r border-gray-200 flex flex-col h-screen transition-all duration-300 ease-in-out flex-shrink-0 overflow-x-hidden
+        ${collapsed ? 'w-16' : 'w-64'}
+        fixed md:relative z-50 md:z-0
+        ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}>
       <div className="p-4 border-b border-gray-200 flex items-center gap-3 relative">
         <button
           onClick={onToggleCollapse}
-          className="hover:bg-gray-100 rounded p-1 transition-colors"
+          className="hover:bg-gray-100 rounded p-1 transition-colors hidden md:block"
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? <ChevronRight className="w-6 h-6 text-gray-600" /> : <Menu className="w-6 h-6 text-gray-600" />}
+        </button>
+        <button
+          onClick={onMobileClose}
+          className="hover:bg-gray-100 rounded p-1 transition-colors md:hidden"
+          title="Close menu"
+        >
+          <ChevronLeft className="w-6 h-6 text-gray-600" />
         </button>
         {!collapsed && <h1 className="text-xl font-bold text-gray-800">Tasker</h1>}
       </div>
@@ -220,6 +243,7 @@ export default function Sidebar({ lists, selectedListId, onSelectList, onAddList
           </div>
         </>
       )}
-    </div>
+      </div>
+    </>
   );
 }

@@ -3,7 +3,7 @@
 import { TaskList } from '@/types';
 import { useStore } from '@/store/useStore';
 import TaskCard from './TaskCard';
-import { Plus, Folder, Eye, EyeOff, LayoutGrid, List, LogOut, User as UserIcon } from 'lucide-react';
+import { Plus, Folder, Eye, EyeOff, LayoutGrid, List, LogOut, User as UserIcon, Menu } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { User as FirebaseUser } from 'firebase/auth';
@@ -12,11 +12,12 @@ interface TaskViewProps {
   list: TaskList;
   user: FirebaseUser | null;
   onSignOut: () => void;
+  onOpenMobileSidebar: () => void;
 }
 
 const COLORS = ['yellow', 'pink', 'blue', 'green', 'purple', 'orange'];
 
-export default function TaskView({ list, user, onSignOut }: TaskViewProps) {
+export default function TaskView({ list, user, onSignOut, onOpenMobileSidebar }: TaskViewProps) {
   const { tasks, addTask, updateList, groups } = useStore();
   const [newTaskId, setNewTaskId] = useState<string | null>(null);
   const [showCompleted, setShowCompleted] = useState(true);
@@ -56,44 +57,53 @@ export default function TaskView({ list, user, onSignOut }: TaskViewProps) {
 
   return (
     <div className="h-full flex flex-col bg-gray-50">
-      <div className="border-b border-gray-200 bg-white px-8 py-6">
+      <div className="border-b border-gray-200 bg-white px-4 md:px-8 py-4 md:py-6">
         <div className="flex items-center justify-between mb-3">
-          <input
-            type="text"
-            value={list.name}
-            onChange={(e) => updateList(list.id, { name: e.target.value })}
-            className="text-3xl font-bold text-gray-800 bg-transparent border-none outline-none"
-            placeholder="List name..."
-          />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <button
+              onClick={onOpenMobileSidebar}
+              className="md:hidden hover:bg-gray-100 rounded p-2 transition-colors flex-shrink-0"
+              title="Open menu"
+            >
+              <Menu className="w-5 h-5 text-gray-600" />
+            </button>
+            <input
+              type="text"
+              value={list.name}
+              onChange={(e) => updateList(list.id, { name: e.target.value })}
+              className="text-xl md:text-3xl font-bold text-gray-800 bg-transparent border-none outline-none min-w-0 flex-1"
+              placeholder="List name..."
+            />
+          </div>
+          <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
             <button
               onClick={() => setShowCompleted(!showCompleted)}
-              className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className="flex items-center gap-1 md:gap-2 px-2 md:px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
               title={showCompleted ? 'Hide completed tasks' : 'Show completed tasks'}
             >
               {showCompleted ? (
-                <><EyeOff className="w-4 h-4" /><span className="text-sm">Hide Done</span></>
+                <><EyeOff className="w-4 h-4" /><span className="text-xs md:text-sm hidden sm:inline">Hide Done</span></>
               ) : (
-                <><Eye className="w-4 h-4" /><span className="text-sm">Show Done</span></>
+                <><Eye className="w-4 h-4" /><span className="text-xs md:text-sm hidden sm:inline">Show Done</span></>
               )}
             </button>
             <button
               onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-              className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className="flex items-center gap-1 md:gap-2 px-2 md:px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
               title="Toggle View"
             >
               {viewMode === 'grid' ? (
-                <><List className="w-4 h-4" /><span className="text-sm">List View</span></>
+                <><List className="w-4 h-4" /><span className="text-xs md:text-sm hidden sm:inline">List View</span></>
               ) : (
-                <><LayoutGrid className="w-4 h-4" /><span className="text-sm">Grid View</span></>
+                <><LayoutGrid className="w-4 h-4" /><span className="text-xs md:text-sm hidden sm:inline">Grid View</span></>
               )}
             </button>
             <button
               onClick={handleAddTask}
-              className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+              className="flex items-center gap-1 md:gap-2 px-3 md:px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
             >
-              <Plus className="w-5 h-5" />
-              Add Task
+              <Plus className="w-4 md:w-5 h-4 md:h-5" />
+              <span className="hidden sm:inline">Add Task</span>
             </button>
             <div className="relative ml-2">
               <button
@@ -133,12 +143,12 @@ export default function TaskView({ list, user, onSignOut }: TaskViewProps) {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Folder className="w-4 h-4 text-gray-400" />
+        <div className="flex items-center gap-2 overflow-x-auto">
+          <Folder className="w-4 h-4 text-gray-400 flex-shrink-0" />
           <select
             value={list.groupId || ''}
             onChange={handleGroupChange}
-            className="text-sm text-gray-600 bg-transparent border border-gray-300 rounded-full px-3 py-1 outline-none focus:border-blue-500"
+            className="text-xs md:text-sm text-gray-600 bg-transparent border border-gray-300 rounded-full px-2 md:px-3 py-1 outline-none focus:border-blue-500"
           >
             <option value="">Uncategorized</option>
             {groups.map((group) => (
@@ -150,22 +160,22 @@ export default function TaskView({ list, user, onSignOut }: TaskViewProps) {
         </div>
       </div>
 
-      <div ref={setNodeRef} className={`flex-1 overflow-y-auto p-8 transition-colors ${
+      <div ref={setNodeRef} className={`flex-1 overflow-y-auto p-4 md:p-8 transition-colors ${
         isOver ? 'bg-blue-50' : ''
       }`}>
         {listTasks.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-400 text-lg mb-4">No tasks yet</p>
+            <p className="text-gray-400 text-base md:text-lg mb-4">No tasks yet</p>
             <button
               onClick={handleAddTask}
-              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              className="px-4 md:px-6 py-2 md:py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm md:text-base"
             >
               Add your first task
             </button>
           </div>
         ) : (
           <div className={viewMode === 'grid' 
-            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4'
             : 'flex flex-col gap-2'
           }>
             {listTasks.map((task, index) => (

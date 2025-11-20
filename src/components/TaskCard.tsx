@@ -129,7 +129,7 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid' }:
             e.stopPropagation();
             setShowExpandedView(true);
           }}
-          className="opacity-30 hover:opacity-100 transition-opacity flex-shrink-0"
+          className="opacity-30 hover:opacity-100 transition-opacity flex-shrink-0 p-1 touch-manipulation"
           title="Expand card"
         >
           <Maximize2 className="w-4 h-4 text-gray-600" />
@@ -139,7 +139,7 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid' }:
             e.stopPropagation();
             setShowColorPicker(!showColorPicker);
           }}
-          className="opacity-30 hover:opacity-100 transition-opacity flex-shrink-0 relative"
+          className="opacity-30 hover:opacity-100 transition-opacity flex-shrink-0 relative p-1 touch-manipulation"
           title="Change color"
         >
           <Palette className="w-4 h-4 text-gray-600" />
@@ -149,7 +149,7 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid' }:
                 className="fixed inset-0 z-10" 
                 onClick={() => setShowColorPicker(false)}
               />
-              <div className="absolute bottom-full right-0 mb-1 bg-white rounded-lg shadow-xl border border-gray-200 p-2 z-20 flex gap-1">
+              <div className="absolute bottom-full right-0 mb-1 bg-white rounded-lg shadow-xl border border-gray-200 p-2 z-20 flex gap-1.5">
                 {colors.map((color) => (
                   <button
                     key={color.value}
@@ -158,7 +158,7 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid' }:
                       updateTask(task.id, { color: color.value });
                       setShowColorPicker(false);
                     }}
-                    className={`w-6 h-6 rounded-full ${color.class} border-2 border-gray-300 hover:border-gray-500 transition-all`}
+                    className={`w-8 h-8 rounded-full ${color.class} border-2 border-gray-300 hover:border-gray-500 transition-all touch-manipulation`}
                     title={color.name}
                   />
                 ))}
@@ -171,7 +171,7 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid' }:
             e.stopPropagation();
             deleteTask(task.id);
           }}
-          className="opacity-30 hover:opacity-100 transition-opacity flex-shrink-0"
+          className="opacity-30 hover:opacity-100 transition-opacity flex-shrink-0 p-1 touch-manipulation"
           title="Delete task"
         >
           <Trash2 className="w-4 h-4 text-gray-600" />
@@ -185,13 +185,13 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid' }:
             className="fixed inset-0 bg-black bg-opacity-50 z-50" 
             onClick={() => setShowExpandedView(false)}
           />
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl z-50 max-w-3xl w-full mx-4 max-h-[85vh] overflow-y-auto">
-            <div className={`${task.completed ? 'bg-gray-200' : colorClass} p-8 rounded-2xl`}>
-              <div className="flex items-start justify-between mb-6">
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl md:rounded-2xl shadow-2xl z-50 max-w-3xl w-full mx-4 max-h-[90vh] md:max-h-[85vh] overflow-y-auto">
+            <div className={`${task.completed ? 'bg-gray-200' : colorClass} p-4 md:p-8 rounded-xl md:rounded-2xl`}>
+              <div className="flex items-start justify-between mb-4 md:mb-6">
                 <textarea
                   value={task.title}
                   onChange={(e) => updateTask(task.id, { title: e.target.value })}
-                  className={`bg-transparent border-none outline-none w-full text-2xl font-bold cursor-text resize-none ${
+                  className={`bg-transparent border-none outline-none w-full text-xl md:text-2xl font-bold cursor-text resize-none ${
                     task.completed ? 'line-through text-gray-500' : 'text-gray-800'
                   }`}
                   placeholder="Task title"
@@ -200,54 +200,54 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid' }:
                 />
                 <button
                   onClick={() => toggleTaskComplete(task.id)}
-                  className="ml-4 flex-shrink-0"
+                  className="ml-2 md:ml-4 flex-shrink-0 p-1 touch-manipulation"
                   title={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
                 >
                   {task.completed ? (
-                    <CheckCircle2 className="w-8 h-8 text-green-600" />
+                    <CheckCircle2 className="w-7 md:w-8 h-7 md:h-8 text-green-600" />
                   ) : (
-                    <Circle className="w-8 h-8 text-gray-400 hover:text-gray-600" />
+                    <Circle className="w-7 md:w-8 h-7 md:h-8 text-gray-400 hover:text-gray-600" />
                   )}
                 </button>
               </div>
               
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+              <div className="mb-4 md:mb-6">
+                <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">Notes</label>
                 <textarea
                   value={task.notes || ''}
                   onChange={(e) => updateTask(task.id, { notes: e.target.value })}
-                  className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-2 md:p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:text-base"
                   placeholder="Add notes..."
                   rows={4}
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex gap-1.5 md:gap-2 flex-wrap">
                   {colors.map((color) => (
                     <button
                       key={color.value}
                       onClick={() => updateTask(task.id, { color: color.value })}
-                      className={`w-8 h-8 rounded-full ${color.class} border-2 ${
+                      className={`w-7 h-7 md:w-8 md:h-8 rounded-full ${color.class} border-2 ${
                         task.color === color.value ? 'border-gray-800' : 'border-gray-300'
-                      } hover:border-gray-500 transition-all`}
+                      } hover:border-gray-500 transition-all touch-manipulation`}
                       title={color.name}
                     />
                   ))}
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-2 md:gap-3 w-full sm:w-auto">
                   <button
                     onClick={() => {
                       deleteTask(task.id);
                       setShowExpandedView(false);
                     }}
-                    className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
+                    className="flex-1 sm:flex-none px-4 md:px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium text-sm md:text-base touch-manipulation"
                   >
-                    Delete Task
+                    Delete
                   </button>
                   <button
                     onClick={() => setShowExpandedView(false)}
-                    className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                    className="flex-1 sm:flex-none px-4 md:px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm md:text-base touch-manipulation"
                   >
                     Save
                   </button>

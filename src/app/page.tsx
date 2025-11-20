@@ -17,6 +17,7 @@ export default function Home() {
   const [activeTask, setActiveTask] = useState<any>(null);
   const [hoverListId, setHoverListId] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const isDraggingRef = useRef(false);
 
   useEffect(() => {
@@ -174,26 +175,36 @@ export default function Home() {
         <Sidebar 
           lists={lists}
           selectedListId={selectedListId}
-          onSelectList={setSelectedListId}
+          onSelectList={(id) => {
+            setSelectedListId(id);
+            setMobileSidebarOpen(false);
+          }}
           onAddList={handleAddList}
           hoverListId={hoverListId}
           user={user}
           onSignOut={signOut}
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          mobileOpen={mobileSidebarOpen}
+          onMobileClose={() => setMobileSidebarOpen(false)}
         />
         <main className="flex-1 overflow-hidden transition-all duration-300 ease-in-out">
           {selectedList ? (
-            <TaskView list={selectedList} user={user} onSignOut={signOut} />
+            <TaskView 
+              list={selectedList} 
+              user={user} 
+              onSignOut={signOut}
+              onOpenMobileSidebar={() => setMobileSidebarOpen(true)}
+            />
           ) : (
-              <div className="h-full flex items-center justify-center">
+              <div className="h-full flex items-center justify-center p-4">
                 <div className="text-center">
-                  <div className="text-6xl mb-4">📝</div>
-                  <h2 className="text-2xl font-bold text-gray-800 mb-2">No Lists Yet</h2>
-                  <p className="text-gray-600 mb-6">Create your first list to get started</p>
+                  <div className="text-5xl md:text-6xl mb-4">📝</div>
+                  <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">No Lists Yet</h2>
+                  <p className="text-sm md:text-base text-gray-600 mb-6">Create your first list to get started</p>
                   <button
                     onClick={handleAddList}
-                    className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                    className="px-5 md:px-6 py-2.5 md:py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm md:text-base touch-manipulation"
                   >
                     Create List
                   </button>
