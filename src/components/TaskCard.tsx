@@ -26,8 +26,10 @@ const COLORS = {
 export default function TaskCard({ task, autoFocus = false, viewMode = 'grid', showListName = false, onNavigateToList }: TaskCardProps) {
   const { toggleTaskComplete, updateTask, deleteTask, lists } = useStore();
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const colorButtonRef = useRef<HTMLButtonElement>(null);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showExpandedView, setShowExpandedView] = useState(false);
+  const [colorPickerPosition, setColorPickerPosition] = useState({ top: 0, left: 0 });
 
   const cardHeight = viewMode === 'grid' ? '120px' : '70px';
   const lineClamp = viewMode === 'grid' ? 2 : 1;
@@ -166,8 +168,16 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid', s
           <Maximize2 className="w-4 h-4 text-gray-600" />
         </button>
         <button
+          ref={colorButtonRef}
           onClick={(e) => {
             e.stopPropagation();
+            if (!showColorPicker && colorButtonRef.current) {
+              const rect = colorButtonRef.current.getBoundingClientRect();
+              setColorPickerPosition({
+                top: rect.top - 50,
+                left: rect.left - 200
+              });
+            }
             setShowColorPicker(!showColorPicker);
           }}
           className="opacity-30 hover:opacity-100 transition-opacity flex-shrink-0 relative p-1 touch-manipulation"
@@ -180,7 +190,13 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid', s
                 className="fixed inset-0 z-10" 
                 onClick={() => setShowColorPicker(false)}
               />
-              <div className="absolute bottom-full right-0 mb-1 bg-white rounded-lg shadow-xl border border-gray-200 p-2 z-20 flex gap-1.5">
+              <div 
+                className="fixed bg-white rounded-lg shadow-xl border border-gray-200 p-2 z-20 flex gap-1.5"
+                style={{
+                  top: `${colorPickerPosition.top}px`,
+                  left: `${colorPickerPosition.left}px`
+                }}
+              >
                 {colors.map((color) => (
                   <button
                     key={color.value}
