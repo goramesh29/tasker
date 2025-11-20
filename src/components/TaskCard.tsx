@@ -15,12 +15,12 @@ interface TaskCardProps {
 }
 
 const COLORS = {
-  yellow: 'bg-blue-50 hover:bg-blue-100',
-  pink: 'bg-blue-50 hover:bg-blue-100',
+  yellow: 'bg-yellow-50 hover:bg-yellow-100',
+  pink: 'bg-pink-50 hover:bg-pink-100',
   blue: 'bg-blue-50 hover:bg-blue-100',
-  green: 'bg-blue-50 hover:bg-blue-100',
-  purple: 'bg-blue-50 hover:bg-blue-100',
-  orange: 'bg-blue-50 hover:bg-blue-100',
+  green: 'bg-green-50 hover:bg-green-100',
+  purple: 'bg-purple-50 hover:bg-purple-100',
+  orange: 'bg-orange-50 hover:bg-orange-100',
 };
 
 export default function TaskCard({ task, autoFocus = false, viewMode = 'grid', showListName = false, onNavigateToList }: TaskCardProps) {
