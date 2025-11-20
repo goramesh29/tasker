@@ -151,12 +151,12 @@ export default function Sidebar({ lists, selectedListId, onSelectList, onAddList
         ))}
 
         {/* Groups */}
-        {sortedGroups.map((group) => {
+        {sortedGroups.map((group, index) => {
           const groupLists = lists.filter(list => list.groupId === group.id);
           const isCollapsed = collapsedGroups.has(group.id);
 
           return (
-            <div key={group.id} className="mb-2">
+            <div key={group.id} className={`mb-2 ${index === 0 && ungroupedLists.length > 0 ? 'mt-6' : ''}`}>
               <div className="flex items-center gap-1 px-2 py-1">
                 <button
                   onClick={() => toggleGroup(group.id)}
