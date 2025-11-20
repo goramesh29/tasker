@@ -9,6 +9,7 @@ export interface Task {
   updatedAt: number;
   color?: string;
   position: number;
+  dueDate?: number;
 }
 
 export interface TaskList {

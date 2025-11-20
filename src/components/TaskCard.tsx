@@ -1,7 +1,7 @@
 'use client';
 
 import { Task } from '@/types';
-import { Circle, CheckCircle2, Trash2, Palette, Maximize2, ExternalLink } from 'lucide-react';
+import { Circle, CheckCircle2, Trash2, Palette, Maximize2, ExternalLink, Calendar } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { useEffect, useRef, useState } from 'react';
 import { useDraggable } from '@dnd-kit/core';
@@ -15,26 +15,34 @@ interface TaskCardProps {
 }
 
 const COLORS = {
+  white: 'bg-white hover:bg-gray-50',
   yellow: 'bg-yellow-50 hover:bg-yellow-100',
   pink: 'bg-pink-50 hover:bg-pink-100',
   blue: 'bg-blue-50 hover:bg-blue-100',
   green: 'bg-green-50 hover:bg-green-100',
   purple: 'bg-purple-50 hover:bg-purple-100',
   orange: 'bg-orange-50 hover:bg-orange-100',
+  gray: 'bg-gray-100 hover:bg-gray-200',
 };
 
 export default function TaskCard({ task, autoFocus = false, viewMode = 'grid', showListName = false, onNavigateToList }: TaskCardProps) {
   const { toggleTaskComplete, updateTask, deleteTask, lists } = useStore();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const colorButtonRef = useRef<HTMLButtonElement>(null);
+  const dateButtonRef = useRef<HTMLButtonElement>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [showExpandedView, setShowExpandedView] = useState(false);
   const [colorPickerPosition, setColorPickerPosition] = useState({ top: 0, left: 0 });
+  const [datePickerPosition, setDatePickerPosition] = useState({ top: 0, left: 0 });
 
   const cardHeight = viewMode === 'grid' ? '120px' : '70px';
   const lineClamp = viewMode === 'grid' ? 2 : 1;
 
   const colors = [
+    { name: 'Gray', class: 'bg-gray-100', value: 'gray' },
+    { name: 'White', class: 'bg-white', value: 'white' },
     { name: 'Sky Blue', class: 'bg-sky-100', value: 'sky' },
     { name: 'Yellow', class: 'bg-yellow-100', value: 'yellow' },
     { name: 'Pink', class: 'bg-pink-100', value: 'pink' },
@@ -49,6 +57,29 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid', s
   const colorClass = task.color && task.color in COLORS 
     ? COLORS[task.color as keyof typeof COLORS] 
     : 'bg-blue-50 hover:bg-blue-100';
+
+  const formatDueDate = (timestamp: number) => {
+    const date = new Date(timestamp);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today';
+    } else if (date.toDateString() === tomorrow.toDateString()) {
+      return 'Tomorrow';
+    } else {
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+  };
+
+  const isDueDatePast = (timestamp: number) => {
+    const date = new Date(timestamp);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    date.setHours(0, 0, 0, 0);
+    return date < today;
+  };
 
   useEffect(() => {
     if (autoFocus && inputRef.current) {
@@ -69,6 +100,15 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid', s
       inputRef.current.style.height = Math.min(inputRef.current.scrollHeight, 48) + 'px';
     }
   }, [autoFocus, task.title, viewMode]);
+
+  useEffect(() => {
+    if (showDatePicker && dateInputRef.current) {
+      setTimeout(() => {
+        dateInputRef.current?.focus();
+        dateInputRef.current?.showPicker?.();
+      }, 50);
+    }
+  }, [showDatePicker]);
 
   const style = transform && !isDragging ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
@@ -124,6 +164,11 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid', s
               maxHeight: viewMode === 'list' ? '24px' : '48px',
             }}
           />
+          {task.dueDate && viewMode === 'grid' && (
+            <div className={`text-xs mt-1 ${isDueDatePast(task.dueDate) && !task.completed ? 'text-red-500 font-medium' : 'text-gray-500'} opacity-70`}>
+              📅 {formatDueDate(task.dueDate)}
+            </div>
+          )}
         </div>
         <button
           onClick={(e) => {
@@ -157,6 +202,24 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid', s
           </button>
         )}
         <div className="flex items-center gap-2">
+          <button
+            ref={dateButtonRef}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (dateButtonRef.current) {
+                const rect = dateButtonRef.current.getBoundingClientRect();
+                setDatePickerPosition({
+                  top: rect.bottom + 5,
+                  left: rect.left - 100
+                });
+              }
+              setShowDatePicker(!showDatePicker);
+            }}
+            className="opacity-30 hover:opacity-100 transition-opacity flex-shrink-0 p-1 touch-manipulation"
+            title="Set due date"
+          >
+            <Calendar className="w-4 h-4 text-gray-600" />
+          </button>
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -213,6 +276,55 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid', s
             </>
           )}
         </button>
+        
+        {/* Date Picker */}
+        {showDatePicker && (
+          <>
+            <div 
+              className="fixed inset-0 z-10" 
+              onClick={() => setShowDatePicker(false)}
+            />
+            <div 
+              className="fixed bg-white rounded-lg shadow-xl border border-gray-200 p-3 z-20 w-64"
+              style={{
+                top: `${datePickerPosition.top}px`,
+                left: `${datePickerPosition.left}px`
+              }}
+            >
+              <div className="mb-2 text-sm font-medium text-gray-700">Due Date</div>
+              <input
+                ref={dateInputRef}
+                type="date"
+                value={task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ''}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    const [year, month, day] = e.target.value.split('-').map(Number);
+                    const dateValue = new Date(year, month - 1, day).getTime();
+                    updateTask(task.id, { dueDate: dateValue });
+                  } else {
+                    updateTask(task.id, { dueDate: undefined });
+                  }
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                onClick={(e) => e.stopPropagation()}
+                autoFocus
+              />
+              {task.dueDate && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    updateTask(task.id, { dueDate: undefined });
+                    setShowDatePicker(false);
+                  }}
+                  className="mt-2 w-full px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  Clear Date
+                </button>
+              )}
+            </div>
+          </>
+        )}
+        
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -269,6 +381,34 @@ export default function TaskCard({ task, autoFocus = false, viewMode = 'grid', s
                   placeholder="Add notes..."
                   rows={4}
                 />
+              </div>
+
+              <div className="mb-4 md:mb-6">
+                <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">Due Date</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ''}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        const [year, month, day] = e.target.value.split('-').map(Number);
+                        const dateValue = new Date(year, month - 1, day).getTime();
+                        updateTask(task.id, { dueDate: dateValue });
+                      } else {
+                        updateTask(task.id, { dueDate: undefined });
+                      }
+                    }}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:text-base"
+                  />
+                  {task.dueDate && (
+                    <button
+                      onClick={() => updateTask(task.id, { dueDate: undefined })}
+                      className="px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
